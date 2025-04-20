@@ -1,0 +1,44 @@
+Allow FluidSim.c to create an windowed application where I could display some graphic
+0. Set up openGL.
+1. Pure graphic from code. Find how to the window sizes work
+2. Add control that lets me edit the graphic in real time. Ex. click on a pixel to draw it
+3. Figure out some way to load in presets
+
+...
+
+
+Separate files later
+
+
+How to gpu computing with c
+
+
+--------------------------------------------------------------------
+Save point:
+-- OpenGl site, wiki
+-- ***** Get some visuals *****
+
+
+
+--------------------------------------------------------------------
+Windows Installation:
+GLFW 
+  Download From Source
+  
+  Get CMAKE
+    Download installer
+  
+  Build using CMAKE
+  
+  make installer -> creates /include and /lib files that gets included in Makefile. This is located in program Files X86
+  -> installed
+
+GLAD
+  Download from site: select version, preferences
+
+  Put glad's /include into GLFW's include files
+  Put glad.c into project directorry
+  Link all in Makefile
+  -> Done
+
+FluidSim.cpp, version that opens up a window and draw a triangle works.
