@@ -1,16 +1,12 @@
 Allow FluidSim.c to create an windowed application where I could display some graphic
-0. Set up openGL.
-1. Pure graphic from code. Find how to the window sizes work
-2. Add control that lets me edit the graphic in real time. Ex. click on a pixel to draw it
-3. Figure out some way to load in presets
+0. Set up openGL. Done
+1. Pure graphic from code. Find how to the window sizes work. Done
+2. Setup proper files: shader.cpp, fluidsim.cpp, etc
+3. Test: OpenGL for my purpose. Have empty background, shade in a decaying trace along the mouse triangle
+4. Test: Display some data supplied by a function(FluidSim)
+
 
 ...
-
-
-Separate files later
-
-
-How to gpu computing with c
 
 
 --------------------------------------------------------------------
@@ -40,5 +36,8 @@ GLAD
   Put glad.c into project directorry
   Link all in Makefile
   -> Done
+
+OpenGL Tutorial: Enough Done
+
 
 FluidSim.cpp, version that opens up a window and draw a triangle works.

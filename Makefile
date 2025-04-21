@@ -1,9 +1,15 @@
 CXX = g++
 # GLAD include files are inside the GLFW includes folder
-CXXFLAGS = -Wall -Wextra -g -I"C:\Program Files (x86)\GLFW\include"
-LDFLAGS = -L"C:\Program Files (x86)\GLFW\lib" -lglfw3 -lopengl32 -lgdi32
+
+# C:\Program Files (x86)\GLFW\lib
+# C:\Users\zengh\OneDrive\Desktop\FluidSim\GLFW_includes
+CXXFLAGS = -Wall -Wextra -g -I".\GLFW_includes\include"
+LDFLAGS = -L".\GLFW_includes\lib" -lglfw3 -lopengl32 -lgdi32
+
 
 SRC = FluidSim.cpp glad.c
+
+# Rule to make .o files out of SRC
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 
@@ -14,6 +20,7 @@ all:	$(TARGET)
 $(TARGET):	$(OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+FluidSim.o: shaders.h
 
 # Rules to compile files only if changed
 %.o: %.cpp
