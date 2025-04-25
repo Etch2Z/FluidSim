@@ -7,20 +7,22 @@ CXXFLAGS = -Wall -Wextra -g -I".\GLFW_includes\include"
 LDFLAGS = -L".\GLFW_includes\lib" -lglfw3 -lopengl32 -lgdi32
 
 
-SRC = FluidSim.cpp glad.c
+SRC = main.cpp glad.c FluidSim.cpp
 
 # Rule to make .o files out of SRC
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 
-TARGET = FluidSim
+TARGET = main
+
+OUT = FluidSim
 
 all:	$(TARGET)
 
 $(TARGET):	$(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(OUT) $^ $(LDFLAGS)
 
-FluidSim.o: shaders.h
+main.o: shaders.h
 
 # Rules to compile files only if changed
 %.o: %.cpp
@@ -30,4 +32,4 @@ FluidSim.o: shaders.h
 
 
 clean:
-	del -f $(TARGET).exe *.o
+	del -f $(OUT).exe *.o
