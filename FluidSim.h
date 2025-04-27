@@ -1,19 +1,6 @@
 #ifndef FLUIDSIM_H
 #define FLUIDSIM_H
 
-union Point {
-  struct {
-    float xF, yF;
-  };
-  struct {
-    int xI, yI;
-  };
-};
-
-// struct Point {
-//   float x, y;
-// };
-
 class FluidSim {
 private:
 

@@ -23,7 +23,7 @@ all:	$(TARGET)
 $(TARGET):	$(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(OUT) $^ $(LDFLAGS)
 
-main.o: shaders.h
+main.o: main.h shaders.h
 
 # Rules to compile files only if changed
 %.o: %.cpp
