@@ -1,6 +1,19 @@
 #ifndef FLUIDSIM_H
 #define FLUIDSIM_H
 
+union Point {
+  struct {
+    float xF, yF;
+  };
+  struct {
+    int xI, yI;
+  };
+};
+
+// struct Point {
+//   float x, y;
+// };
+
 class FluidSim {
 private:
 
@@ -13,7 +26,7 @@ public:
 
   FluidSim(int w, int h, float diffusion, float viscosity, float dt)
     : w(w), h(h), diffusion(diffusion), viscosity(viscosity), dt(dt) {
-    size = (w+2) * (h+2);
+    size = w * h;
 
     u         = new float[size] {};
     u_prev    = new float[size] {};
@@ -35,7 +48,12 @@ public:
   float* getDensity() const { return dens; }
 
   int IX(int i, int j) const {
-    return i + (w + 2) * j;
+    return i + w * j;
+  }
+
+  // Takes a set of coordinates (x, y) in the density map where sources should be added
+  void addDensity(int n_points, int x, int y) {
+    dens[IX(x, y)] += dt;
   }
 
   // void set_boundry();

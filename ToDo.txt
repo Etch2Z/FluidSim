@@ -4,8 +4,14 @@ Allow FluidSim.c to create an windowed application where I could display some gr
 2. Setup proper files: shader.cpp, fluidsim.cpp, etc. Done
 3. Test: OpenGL for my purpose. Have empty background, shade in a decaying trace along the mouse. Done
 4. Set up the simulation class. With only density map. Done
-5. Render the density map with coloring. Stupid red channel bug splashed -> do it with FluidSim.dens now
-6. Make density map interactable. By 
+5. Render the density map with coloring. Stupid red channel bug splashed -> do it with FluidSim.dens. Done
+6. Make density map interactable. Done
+Eg. Clicking a mouse -> retrieve cord -> map coord to density[]
+    -> update density -> density update openGL
+    Note: no need to check for out of bounds here. OpenGL wraps cords back around
+7. Clean up into main.
+8. Make the mouse shape into circle with cached precomputed operations.
+7. Finish FluidSim equation calculations.
 
 
 X. Test: Display some data supplied by a function(FluidSim)

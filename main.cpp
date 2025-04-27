@@ -9,29 +9,38 @@
 // #include <cmath>
 // #include <vector>
 
+#define PI 3.14159265
+
 int screenW = 800;
 int screenH = 600;
 
-struct Point {
-    float x, y;
-    float r, g, b, a;
-};
+// struct Point {
+//     float x, y;
+// };
 
+Point mouseLoc = {0.0f, 0.0f};
+bool MOUSEDOWN = false;
+
+void trackMouse(GLFWwindow *window);
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void cursor_pos_callback(GLFWwindow* window, double x, double y);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // int argc, char* argv[]
 int main() {
+
     int simW = 1120, simH = 630;
-    float diffusion = 1.0, viscosity = 1.0, dt = 0.1;
-    FluidSim FluidSim(simW-2, simH-2, diffusion, viscosity, dt);
+
+    float diffusion = 1.0, viscosity = 1.0, dt = 0.005;
+    FluidSim FluidSim(simW, simH, diffusion, viscosity, dt);
 
     int size = FluidSim.size;
-    float *tmpArr = new float[FluidSim.size];
     for (int i = 0; i < size; ++i) {
-        tmpArr[i] = (float)i / size;  // Simple gradient from 0 to 1
+        FluidSim.dens[i] = 0.5f;  // Simple gradient from 0 to 1
     }
+
 
     glfwInit();                                                         // Init
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                      // Configure versions & core profiles
@@ -49,9 +58,11 @@ int main() {
         glfwTerminate();
         return -1;
     }
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    // glfwSetCursorPosCallback(window, cursor_pos_callback);
+    glfwSetCursorPosCallback(window, cursor_pos_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     
     // Load OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -70,22 +81,12 @@ int main() {
     // Rectangle Screen that we bind the texture to
     float quad[] = {
         // positions   // texCoords
-        -1.0f, -1.0f,  0.0f, 0.0f,  // bottom-left
-         1.0f, -1.0f,  1.0f, 0.0f,  // bottom-right
-         1.0f,  1.0f,  1.0f, 1.0f,  // top-right
-        -1.0f,  1.0f,  0.0f, 1.0f   // top-left
+        -1.0f, -1.0f,  0.0f, 1.0f,  // bottom-left      array top-right
+         1.0f, -1.0f,  1.0f, 1.0f,  // bottom-right     array bottem-right
+         1.0f,  1.0f,  1.0f, 0.0f,  // top-right        array bottem-left
+        -1.0f,  1.0f,  0.0f, 0.0f   // top-left         array top-left
     };
     
-    for (int i = 0; i < (int)(sizeof(quad)/sizeof(float)); i++) {
-        if (quad[i] > 0) {
-            quad[i] -= 0.1f;
-        }
-        else {
-            quad[i] += 0.1f;
-        }
-        // std::cout << sizeof(quad) << std::endl;
-    }
-
     unsigned int quadIndices[] = {
         0, 1, 2,
         2, 3, 0
@@ -137,9 +138,39 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        if (MOUSEDOWN) {
+            // Create circle and add to density;
+            int radius = 10;
+            int n_points = radius * radius;
+            float widthScale = float(simW)/screenW, heightScale = float(simH)/screenH;
+            // std::cout << simW << ' ' << screenW << std::endl;
+            /*
+            convert screen dimension to sim dimensions
+            screen coord: screenH, screenW
+            density map: simW, simH
+            Ex. screenW = 500   simW = 250      widthScale = 1/2
+            mouseLoc: 400   => 400* 1/2 => simLoc = 200
+            */
+            Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
+            center.xI = int(center.xF);
+            center.yI = int(center.yF);
+            // Point circle[n_points];
+
+            // FluidSim.dens[center.xI] = 1.0f;
+            // printf("%d \n", center.xI);
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 10; j++) {
+                    // FluidSim.dens[FluidSim.IX(center.xI+i, center.yI+j)] = 1.0f;
+                    FluidSim.addDensity(0, center.xI+i, center.yI+j);
+
+                }
+            }
+            // FluidSim.addDensity(center);
+        }
+
         // Bind texture & load with density
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, FluidSim.w, FluidSim.h, GL_RED, GL_FLOAT, tmpArr);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, FluidSim.w, FluidSim.h, GL_RED, GL_FLOAT, FluidSim.dens);
         // Draw the rectangle with density as texture
         myShader.use();
         glBindVertexArray(VAO);
@@ -160,18 +191,32 @@ int main() {
     return 0;
 }
 
-// void cursor_pos_callback(GLFWwindow* window, double x, double y) {
+// Save mouse coords to mouseLoc.
+void trackMouse(GLFWwindow *window) {
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+
+    mouseLoc.xF = x;
+    mouseLoc.yF = y;
+    // printf("%f %f\n", x, y);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            MOUSEDOWN = true;
+        }
+        else if (action == GLFW_RELEASE) {
+            MOUSEDOWN = false;
+        }
+    }
+}
+
+void cursor_pos_callback(GLFWwindow* window, double x, double y) {
     // glfwGetWindowSize(window, &screenW, &screenH);
     // float normX = 2.0f * x / screenW - 1.0f;
     // float normY = 1 - 2.0f * y / screenH;
-
-    // points[point_n].x = normX;
-    // points[point_n].y = normY;
-
-    // point_n++;
-    // point_n = point_n%n;
-
-// }
+}
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -179,11 +224,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+    glfwGetWindowSize(window, &screenW, &screenH);
 }
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if (MOUSEDOWN) { trackMouse(window); }
 }
