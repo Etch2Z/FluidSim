@@ -28,6 +28,11 @@ void processInput(GLFWwindow *window);
 
 // int argc, char* argv[]
 int main() {
+    int w = 800, h = 600;
+    float diffusion = 1.0, viscosity = 1.0, dt = 0.1;
+    FluidSim FluidSim(w, h, diffusion, viscosity, dt);
+    // std::cout << FluidSim.IX(2, 2) << std::endl;
+    return 0;
     glfwInit();                                                         // Init
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                      // Configure versions & core profiles
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
