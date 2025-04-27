@@ -17,22 +17,22 @@ struct Point {
     float r, g, b, a;
 };
 
-const int n = 200;
-
-Point points[n];
-int point_n = 0;
-
 void cursor_pos_callback(GLFWwindow* window, double x, double y);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // int argc, char* argv[]
 int main() {
-    int w = 800, h = 600;
+    int simW = 1120, simH = 630;
     float diffusion = 1.0, viscosity = 1.0, dt = 0.1;
-    FluidSim FluidSim(w, h, diffusion, viscosity, dt);
-    // std::cout << FluidSim.IX(2, 2) << std::endl;
-    return 0;
+    FluidSim FluidSim(simW-2, simH-2, diffusion, viscosity, dt);
+
+    int size = FluidSim.size;
+    float *tmpArr = new float[FluidSim.size];
+    for (int i = 0; i < size; ++i) {
+        tmpArr[i] = (float)i / size;  // Simple gradient from 0 to 1
+    }
+
     glfwInit();                                                         // Init
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                      // Configure versions & core profiles
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -51,7 +51,7 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, cursor_pos_callback);
+    // glfwSetCursorPosCallback(window, cursor_pos_callback);
     
     // Load OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -67,27 +67,68 @@ int main() {
     // Build and compile shaders
     Shader myShader("vertexShader330.vs", "fragmentShader330.fs");
 
-    for (int i = 0; i < n; i++) {
-        points[i] = {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f};
+    // Rectangle Screen that we bind the texture to
+    float quad[] = {
+        // positions   // texCoords
+        -1.0f, -1.0f,  0.0f, 0.0f,  // bottom-left
+         1.0f, -1.0f,  1.0f, 0.0f,  // bottom-right
+         1.0f,  1.0f,  1.0f, 1.0f,  // top-right
+        -1.0f,  1.0f,  0.0f, 1.0f   // top-left
+    };
+    
+    for (int i = 0; i < (int)(sizeof(quad)/sizeof(float)); i++) {
+        if (quad[i] > 0) {
+            quad[i] -= 0.1f;
+        }
+        else {
+            quad[i] += 0.1f;
+        }
+        // std::cout << sizeof(quad) << std::endl;
     }
 
-    unsigned int VBO, VAO;
+    unsigned int quadIndices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     // color attribute
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // glPointSize(10.0f);
+    glBindVertexArray(0);
+
+    // Texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // texture settings
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Allocate texture (Later updates don't reallocate again)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FluidSim.w, FluidSim.h, 0, GL_RED, GL_FLOAT, nullptr);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, simWidth, simHeight, 0, GL_RED, GL_FLOAT, nullptr);
+
+
     // render loop
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
@@ -96,15 +137,15 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // render the triangle
+        // Bind texture & load with density
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, FluidSim.w, FluidSim.h, GL_RED, GL_FLOAT, tmpArr);
+        // Draw the rectangle with density as texture
         myShader.use();
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-
         glBindVertexArray(VAO);
-        glDrawArrays(GL_POINTS, 0, n);
- 
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -119,18 +160,18 @@ int main() {
     return 0;
 }
 
-void cursor_pos_callback(GLFWwindow* window, double x, double y) {
-    glfwGetWindowSize(window, &screenW, &screenH);
-    float normX = 2.0f * x / screenW - 1.0f;
-    float normY = 1 - 2.0f * y / screenH;
+// void cursor_pos_callback(GLFWwindow* window, double x, double y) {
+    // glfwGetWindowSize(window, &screenW, &screenH);
+    // float normX = 2.0f * x / screenW - 1.0f;
+    // float normY = 1 - 2.0f * y / screenH;
 
-    points[point_n].x = normX;
-    points[point_n].y = normY;
+    // points[point_n].x = normX;
+    // points[point_n].y = normY;
 
-    point_n++;
-    point_n = point_n%n;
+    // point_n++;
+    // point_n = point_n%n;
 
-}
+// }
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)

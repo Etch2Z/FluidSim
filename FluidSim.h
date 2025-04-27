@@ -3,13 +3,14 @@
 
 class FluidSim {
 private:
+
+public:
   int w, h, size;
   float diffusion, viscosity, dt;
 
   // u: x-velocity  v: y-velocity   dens: density
   float *u, *u_prev, *v, *v_prev, *dens, *dens_prev;
 
-  public:
   FluidSim(int w, int h, float diffusion, float viscosity, float dt)
     : w(w), h(h), diffusion(diffusion), viscosity(viscosity), dt(dt) {
     size = (w+2) * (h+2);
@@ -31,19 +32,20 @@ private:
     delete[] dens_prev;
   }
 
+  float* getDensity() const { return dens; }
+
   int IX(int i, int j) const {
     return i + (w + 2) * j;
   }
 
-  void set_boundry();
-  
+  // void set_boundry();
 
-  void diffuse();
-  void advect();
-  void project();
+  // void diffuse();
+  // void advect();
+  // void project();
 
-  void dens_step();
-  void vel_step();
+  // void dens_step();
+  // void vel_step();
 };
 
 #endif // FluidSim

@@ -3,9 +3,9 @@ Allow FluidSim.c to create an windowed application where I could display some gr
 1. Pure graphic from code. Find how to the window sizes work. Done
 2. Setup proper files: shader.cpp, fluidsim.cpp, etc. Done
 3. Test: OpenGL for my purpose. Have empty background, shade in a decaying trace along the mouse. Done
-4. Set up the simulation class. Produce a density map for some step n.
-5. Display the density map with coloring.
-6. Make density map interactable.
+4. Set up the simulation class. With only density map. Done
+5. Render the density map with coloring. Stupid red channel bug splashed -> do it with FluidSim.dens now
+6. Make density map interactable. By 
 
 
 X. Test: Display some data supplied by a function(FluidSim)

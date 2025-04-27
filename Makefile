@@ -3,7 +3,8 @@ CXX = g++
 
 # C:\Program Files (x86)\GLFW\lib
 # C:\Users\zengh\OneDrive\Desktop\FluidSim\GLFW_includes
-CXXFLAGS = -Wall -Wextra -g -I".\GLFW_includes\include"
+# -Wextra
+CXXFLAGS = -Wall  -g -I".\GLFW_includes\include"
 LDFLAGS = -L".\GLFW_includes\lib" -lglfw3 -lopengl32 -lgdi32
 
 
