@@ -62,8 +62,20 @@ int main() {
 
         float widthScale = float(simW)/screenW, heightScale = float(simH)/screenH;
 
-        if (MOUSEDOWN) {
-            addCircle(fluidsim, widthScale, heightScale);
+        if (BUTTONDOWN) {
+            if (buttonClicked == LEFT_MOUSE_BUTTON) {
+                printf("L\n");
+                addCircle(fluidsim, widthScale, heightScale);
+            }
+            else if (buttonClicked == RIGHT_MOUSE_BUTTON) {
+                printf("R\n");
+            }
+            else if (buttonClicked == G_KEY) {
+                printf("G\n");
+            }
+            else if (buttonClicked == S_KEY) {
+                printf("S\n");
+            }
         }
 
         fluidsim->update();

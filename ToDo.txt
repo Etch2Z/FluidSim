@@ -17,9 +17,8 @@ Eg. Clicking a mouse -> retrieve cord -> map coord to density[]
   -> show the density getting diffused
   Trouble: bad correspondance between i,j and w,h dimensions in forloops and IX() accesses.
 10. Make a report on this so far. Demo just the diffusion.
-11. Finish diffusion: avect()
-
-12. Velocity Fields? 
+11. Finish diffusion: avect() Done
+12. Velocity Fields. Right click to add velocity field.
   A trigger for gravity (Full grid of negative vertical velocity)
 
 13. Better UI? more buttons. Ex. button to turn on gravity, left & right click. Colors?

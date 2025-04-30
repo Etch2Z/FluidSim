@@ -10,14 +10,6 @@
 #include <stdio.h>
 #include <cmath>
 
-union Point {
-  struct {
-    float xF, yF;
-  };
-  struct {
-    int xI, yI;
-  };
-};
 
 #define PI 3.14159265
 
@@ -29,8 +21,24 @@ union Point {
 int screenW = 800;
 int screenH = 600;
 // Updated by callback function when changes
+union Point {
+  struct {
+    float xF, yF;
+  };
+  struct {
+    int xI, yI;
+  };
+};
 Point mouseLoc = {0.0f, 0.0f};
-bool MOUSEDOWN = false;
+enum Button {
+    NONE,
+    LEFT_MOUSE_BUTTON,
+    RIGHT_MOUSE_BUTTON,
+    G_KEY,
+    S_KEY,
+};
+bool BUTTONDOWN = false;
+Button buttonClicked = Button::NONE;
 // Class for caching directions to go around the circle center to form a circle
 class Circle {
 public:
@@ -59,6 +67,7 @@ void setupTexture(unsigned int& texture, int w, int h);
 
 void trackMouse(GLFWwindow *window);
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void cursor_pos_callback(GLFWwindow* window, double x, double y);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -113,6 +122,7 @@ void initCircle(int radius) {
     }
 }
 
+// Setup window, window setting, input callback functions
 GLFWwindow* init_window() {
     glfwInit();                                                         // Init
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);                      // Configure versions & core profiles
@@ -135,6 +145,7 @@ GLFWwindow* init_window() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, cursor_pos_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetKeyCallback(window, key_callback);
     
     // Load OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -212,14 +223,35 @@ void trackMouse(GLFWwindow *window) {
     // printf("%f %f\n", x, y);
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        BUTTONDOWN = true;
+        if (key == GLFW_KEY_G) {
+            buttonClicked = G_KEY;
+        }
+        else if (key == GLFW_KEY_S) {
+            buttonClicked = S_KEY;
+        }
+    }
+    else if (action == GLFW_RELEASE) {
+        BUTTONDOWN = false;
+        buttonClicked = NONE;
+    }
+}
+
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
-        if (action == GLFW_PRESS) {
-            MOUSEDOWN = true;
+    if (action == GLFW_PRESS) {
+        BUTTONDOWN = true;
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            buttonClicked = LEFT_MOUSE_BUTTON;
         }
-        else if (action == GLFW_RELEASE) {
-            MOUSEDOWN = false;
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+            buttonClicked = RIGHT_MOUSE_BUTTON;
         }
+    }
+    else if (action == GLFW_RELEASE) {
+        BUTTONDOWN = false;
+        buttonClicked = NONE;
     }
 }
 
@@ -241,7 +273,7 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    if (MOUSEDOWN) { trackMouse(window); }
+    if (BUTTONDOWN) { trackMouse(window); }
 }
 
 #endif // Main

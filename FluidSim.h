@@ -30,7 +30,7 @@ public:
         dens_prev = new float[size] {};
         
         // for (int i = 0; i < size; i++) {
-        //     v[i] = 0.01f;
+        //     v[i] = -0.01f;
         // }
 
         // for (int i = 0; i < w; i++) {
@@ -135,8 +135,6 @@ public:
     // void vel_step();
 
     void update() {
-        // printf("|t\n");
-        // return;
         dens_step();
     }
 
