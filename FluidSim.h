@@ -29,9 +29,13 @@ public:
         dens      = new float[size] {};
         dens_prev = new float[size] {};
         
-        for (int i = 0; i < size; i++) {
-            v[i] = 0.01f;
-        }
+        // for (int i = 0; i < size; i++) {
+        //     v[i] = 0.01f;
+        // }
+
+        // for (int i = 0; i < w; i++) {
+        //     v[IX(i,h-1)] *= -1;
+        // }
     }
 
     ~FluidSim() {
@@ -51,7 +55,7 @@ public:
 
     // Takes a set of coordinates (x, y) in the density map where sources should be added
     void addDensity(int x, int y) {
-        dens[IX(x, y)] += dt*10;
+        dens[IX(x, y)] += dt;
     }
 
     // b_flag: 1 = 
