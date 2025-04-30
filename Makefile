@@ -23,10 +23,10 @@ all:	$(TARGET)
 $(TARGET):	$(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(OUT) $^ $(LDFLAGS)
 
-main.o: main.h shaders.h
+main.o: main.h shaders.h FluidSim.h
 
 # Rules to compile files only if changed
-%.o: %.cpp
+%.o: %.cpp %.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 %.o: %.c
 	$(CXX) $(CXXFLAGS) -c $< -o $@

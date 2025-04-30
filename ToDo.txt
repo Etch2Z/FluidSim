@@ -7,11 +7,22 @@ Allow FluidSim.c to create an windowed application where I could display some gr
 5. Render the density map with coloring. Stupid red channel bug splashed -> do it with FluidSim.dens. Done
 6. Make density map interactable. Done
 Eg. Clicking a mouse -> retrieve cord -> map coord to density[]
-    -> update density -> density update openGL
-    Note: no need to check for out of bounds here. OpenGL wraps cords back around
-7. Clean up into main.
-8. Make the mouse shape into circle with cached precomputed operations.
-7. Finish FluidSim equation calculations.
+  -> update density -> density update openGL
+  Note: no need to check for out of bounds here. OpenGL wraps cords back around.
+  Edit: we do need to scope the coords to fit in in the density grid.
+7. Clean up into main header file. Done
+8. Make the mouse shape into circle with cached precomputed operations. Done
+9. Finish FluidSim equation calculations. Done
+  Diffuse first -> Set boundary function -> diffuse function
+  -> show the density getting diffused
+  Trouble: bad correspondance between i,j and w,h dimensions in forloops and IX() accesses.
+10. Make a report on this so far. Demo just the diffusion.
+11. Finish diffusion: avect()
+
+12. Velocity Fields? 
+  A trigger for gravity (Full grid of negative vertical velocity)
+
+13. Better UI? more buttons. Ex. button to turn on gravity, left & right click. Colors?
 
 
 X. Test: Display some data supplied by a function(FluidSim)

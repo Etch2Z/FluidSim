@@ -4,8 +4,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "FluidSim.h"
+
 #include <iostream>
 #include <stdio.h>
+#include <cmath>
 
 union Point {
   struct {
@@ -21,15 +24,35 @@ union Point {
 /*
 //////////////////////////////// Global Values /////////////////////////////////////////////////
 */
+
+// Updated by callback function when changes
 int screenW = 800;
 int screenH = 600;
-
+// Updated by callback function when changes
 Point mouseLoc = {0.0f, 0.0f};
 bool MOUSEDOWN = false;
+// Class for caching directions to go around the circle center to form a circle
+class Circle {
+public:
+    Point *v;
+    int capacity;
+    int size;
+
+    Circle() { v = nullptr; size = 0; }
+    ~Circle() { delete[] v; }
+    void init(int capacity) {
+        capacity = capacity;
+        v = new Point[capacity];
+    }
+    void append(Point point) { v[size++] = point; }
+};
+Circle circle;
 
 /*
 //////////////////////////////// Function Declarations /////////////////////////////////////////////////
 */
+void addCircle(FluidSim *fluidsim, float widthScale, float heightScale);
+void initCircle(int radius);
 GLFWwindow* init_window();
 void setupQuad(unsigned int& VAO, unsigned int& VBO, unsigned int& EBO);
 void setupTexture(unsigned int& texture, int w, int h);
@@ -39,11 +62,56 @@ void trackMouse(GLFWwindow *window);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void cursor_pos_callback(GLFWwindow* window, double x, double y);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window);  
 
 /*
 //////////////////////////////// Function Definitions /////////////////////////////////////////////////
 */
+
+/*
+convert screen dimension to sim dimensions
+screen coord: screenH, screenW
+density map: simW, simH
+Ex. screenW = 500   simW = 250      widthScale = 1/2
+mouseLoc: 400   => 400* 1/2 => simLoc = 200
+*/
+void addCircle(FluidSim *fluidsim, float widthScale, float heightScale) {
+    Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
+    center.xI = int(center.xF);
+    center.yI = int(center.yF);
+
+    for (int i = 0; i < circle.size; i++) {
+        int newX = center.xI + circle.v[i].xI;
+        int newY = center.yI + circle.v[i].yI;
+        
+        // Add to area inside the grid boundry only.
+        int w = fluidsim->w-1, h = fluidsim->h-1;
+        if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
+            fluidsim->addDensity(newX, newY);
+        }
+        
+    }
+}
+
+/* Generate the point as vectors to encompass a circle around its center
+0 0 0 0 0                           0 0 1 0 0
+0 0 0 0 0                           0 1 1 1 0
+0 0 x 0 0   X marks the center ->   1 1 x 1 1
+0 0 0 0 0                           0 1 1 1 0
+0 0 0 0 0                           0 0 1 0 0
+*/
+void initCircle(int radius) {
+    int squareSize = (2*radius+1) * (2*radius+1);
+    circle.init(squareSize);
+
+    for (int i = -radius; i <= radius; i++) {
+        for (int j = -radius; j <= radius; j++) {
+            if (sqrt(i*i + j*j) <= radius+0.5) {
+                circle.append(Point{.xI=i, .yI=j});
+            }
+        }
+    }
+}
 
 GLFWwindow* init_window() {
     glfwInit();                                                         // Init

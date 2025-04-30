@@ -11,18 +11,31 @@
 // #include <vector>
 
 
-
-
 // int argc, char* argv[]
 int main() {
-    int simW = 1120, simH = 630;
-    float diffusion = 1.0, viscosity = 1.0, dt = 0.03;
-    FluidSim FluidSim(simW, simH, diffusion, viscosity, dt);
-    int size = FluidSim.size;
-    for (int i = 0; i < size; ++i) {
-        FluidSim.dens[i] = 0.0f;  // Simple gradient from 0 to 1
-    }
+    initCircle(3);
     
+    int simW = 240, simH = 135;
+    float diffusion = 0.01, viscosity = 0.0, dt = 10.0;
+    FluidSim *fluidsim = new FluidSim(simW, simH, diffusion, viscosity, dt);
+    
+    // for (int i = 0; i < fluidsim->size; ++i) {
+    //     // fluidsim->dens_prev[i] = 1.0f;  // Simple gradient from 0 to 1
+    //     printf("%f ", fluidsim->dens[i]);
+    // }
+
+    // printf("\n---------------------------------\n");
+    // // fluidsim->update();
+    // for (int i = 0; i < fluidsim->w; i++) {
+    //     for (int j = 0; j < fluidsim->h; j++) {
+    //         // printf("%f ", fluidsim->dens[fluidsim->IX(j,i)]);
+    //         printf("%d ", fluidsim->IX(i, j));
+    //     }
+    //     printf("\n");
+    // }
+
+    // return 0;
+
     // Init window
     GLFWwindow* window = init_window();
     if (!window) { return -1; }
@@ -36,9 +49,9 @@ int main() {
     
     // Texture
     unsigned int texture;
-    setupTexture(&texture, FluidSim.w, FluidSim.h);
+    setupTexture(&texture, fluidsim->w, fluidsim->h);
 
-
+    // int count = 0;
     // render loop
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
@@ -47,39 +60,29 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        float widthScale = float(simW)/screenW, heightScale = float(simH)/screenH;
+
         if (MOUSEDOWN) {
-            // Create circle and add to density;
-            int radius = 10;
-            int n_points = radius * radius;
-            float widthScale = float(simW)/screenW, heightScale = float(simH)/screenH;
-            // std::cout << simW << ' ' << screenW << std::endl;
-            /*
-            convert screen dimension to sim dimensions
-            screen coord: screenH, screenW
-            density map: simW, simH
-            Ex. screenW = 500   simW = 250      widthScale = 1/2
-            mouseLoc: 400   => 400* 1/2 => simLoc = 200
-            */
-            Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
-            center.xI = int(center.xF);
-            center.yI = int(center.yF);
-            // Point circle[n_points];
-
-            // FluidSim.dens[center.xI] = 1.0f;
-            // printf("%d \n", center.xI);
-            for (int i = 0; i < 10; i++) {
-                for (int j = 0; j < 10; j++) {
-                    // FluidSim.dens[FluidSim.IX(center.xI+i, center.yI+j)] = 1.0f;
-                    FluidSim.addDensity(0, center.xI+i, center.yI+j);
-
-                }
-            }
-            // FluidSim.addDensity(center);
+            addCircle(fluidsim, widthScale, heightScale);
         }
+
+        fluidsim->update();
+        // if (count == 50) {
+        //     printf("-----------------------\n");
+        //     for (int i = 0; i < fluidsim->h; i++) {
+        //         for (int j = 0; j < fluidsim->w; j++) {
+        //             printf("%f ", fluidsim->dens[fluidsim->IX(j,i)]);
+        //             // printf("%d ", fluidsim->IX(i, j));
+        //         }
+        //         printf("\n");
+        //     }
+        //     count = 0;
+        // }
+        // count++;
 
         // Bind texture & load with density
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, FluidSim.w, FluidSim.h, GL_RED, GL_FLOAT, FluidSim.dens);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, fluidsim->w, fluidsim->h, GL_RED, GL_FLOAT, fluidsim->dens);
         // Draw the rectangle with density as texture
         myShader.use();
         glBindVertexArray(VAO);
@@ -94,6 +97,7 @@ int main() {
     // optional: de-allocate all resources once they've outlived their purpose:
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO); 
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
