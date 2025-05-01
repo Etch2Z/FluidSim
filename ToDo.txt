@@ -18,10 +18,13 @@ Eg. Clicking a mouse -> retrieve cord -> map coord to density[]
   Trouble: bad correspondance between i,j and w,h dimensions in forloops and IX() accesses.
 10. Make a report on this so far. Demo just the diffusion.
 11. Finish diffusion: avect() Done
-12. Velocity Fields. Right click to add velocity field.
-  A trigger for gravity (Full grid of negative vertical velocity)
-
-13. Better UI? more buttons. Ex. button to turn on gravity, left & right click. Colors?
+15. vel_step(); update functions & project(). Done.
+12. Velocity Fields. Right click to add velocity field. Done
+13. A trigger for gravity (Full grid of negative vertical velocity) Done
+14. More buttons. Ex. button to turn on gravity, left & right click. Colors? Done
+16. Clean up so far.
+17. Make bounding box with gravity.
+18. GPU.
 
 
 X. Test: Display some data supplied by a function(FluidSim)

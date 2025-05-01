@@ -13,10 +13,10 @@
 
 // int argc, char* argv[]
 int main() {
-    initCircle(3);
+    initCircle(2);
     
     int simW = 240, simH = 135;
-    float diffusion = 0.01, viscosity = 0.0, dt = 10.0;
+    float diffusion = 0.01, viscosity = 0.0, dt = 3.0;
     FluidSim *fluidsim = new FluidSim(simW, simH, diffusion, viscosity, dt);
     
     // for (int i = 0; i < fluidsim->size; ++i) {
@@ -64,17 +64,42 @@ int main() {
 
         if (BUTTONDOWN) {
             if (buttonClicked == LEFT_MOUSE_BUTTON) {
-                printf("L\n");
+                // printf("L\n");
                 addCircle(fluidsim, widthScale, heightScale);
             }
             else if (buttonClicked == RIGHT_MOUSE_BUTTON) {
-                printf("R\n");
+                // printf("R\n");
+                // When clicked, add a circle of velocity fields that attract/pushes away
+                addForce(fluidsim, widthScale, heightScale, PUSH);
             }
             else if (buttonClicked == G_KEY) {
-                printf("G\n");
+                for (int i = 0; i < fluidsim->size; i++) {
+                    fluidsim->v[i] = 1.0f;
+                }
             }
             else if (buttonClicked == S_KEY) {
-                printf("S\n");
+                // printf("S\n");
+                // for (int i = 0; i < fluidsim->size; i++) {
+                //     fluidsim->dens[i] = 0;
+                // }
+                Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
+                center.xI = int(center.xF);
+                center.yI = int(center.yF);
+
+                for (int i = 0; i < 50; i++) {
+                    for (int j = 0; j < 50; j++) {
+                        int newX = center.xI + i;
+                        int newY = center.yI + j;
+                        
+                        // Add to area inside the grid boundry only.
+                        int w = fluidsim->w-1, h = fluidsim->h-1;
+
+                        if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
+                            fluidsim->addSource(fluidsim->u, newX, newY, fluidsim->dt*2);
+                            fluidsim->addSource(fluidsim->v, newX, newY, fluidsim->dt*2);
+                        }
+                    }
+                }
             }
         }
 

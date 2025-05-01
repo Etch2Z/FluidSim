@@ -59,6 +59,7 @@ Circle circle;
 /*
 //////////////////////////////// Function Declarations /////////////////////////////////////////////////
 */
+void addForce(FluidSim *fluidsim, float widthScale, float heightScale, int mode);
 void addCircle(FluidSim *fluidsim, float widthScale, float heightScale);
 void initCircle(int radius);
 GLFWwindow* init_window();
@@ -76,6 +77,37 @@ void processInput(GLFWwindow *window);
 /*
 //////////////////////////////// Function Definitions /////////////////////////////////////////////////
 */
+
+const int PUSH = 0;
+const int PULL = 1;
+void addForce(FluidSim *fluidsim, float widthScale, float heightScale, int mode) {
+    // int sign = 1;
+    // if (mode == PUSH) {
+        
+    // }
+
+    // Get mouse location
+    Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
+    center.xI = int(center.xF);
+    center.yI = int(center.yF);
+
+    // circle object holds the vectors that point from the center of a circle to its entire area
+    for (int i = 0; i < circle.size; i++) {
+        int newX = center.xI + circle.v[i].xI;
+        int newY = center.yI + circle.v[i].yI;
+        
+        // Add to area inside the grid boundry only.
+        int w = fluidsim->w-1, h = fluidsim->h-1;
+        int x_sign = 0, y_sign = 0;
+        x_sign = std::max(-1, std::min(1, circle.v[i].xI));
+        y_sign = std::max(-1, std::min(1, circle.v[i].yI));
+        if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
+            fluidsim->addSource(fluidsim->u, newX, newY, fluidsim->dt*x_sign*2);
+            fluidsim->addSource(fluidsim->v, newX, newY, fluidsim->dt*y_sign*2);
+        }
+        
+    }
+}
 
 /*
 convert screen dimension to sim dimensions
@@ -96,7 +128,7 @@ void addCircle(FluidSim *fluidsim, float widthScale, float heightScale) {
         // Add to area inside the grid boundry only.
         int w = fluidsim->w-1, h = fluidsim->h-1;
         if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
-            fluidsim->addDensity(newX, newY);
+            fluidsim->addSource(fluidsim->dens, newX, newY, fluidsim->dt);
         }
         
     }

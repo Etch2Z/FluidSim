@@ -29,8 +29,8 @@ public:
         dens      = new float[size] {};
         dens_prev = new float[size] {};
         
-        // for (int i = 0; i < size; i++) {
-        //     v[i] = -0.01f;
+        // for (int i = 0; i < size/2; i++) {
+        //     v[i] = -1.0f;
         // }
 
         // for (int i = 0; i < w; i++) {
@@ -53,9 +53,8 @@ public:
         return i + w * j;
     }
 
-    // Takes a set of coordinates (x, y) in the density map where sources should be added
-    void addDensity(int x, int y) {
-        dens[IX(x, y)] += dt;
+    void addSource(float *grid, int x, int y, float dt) {
+        grid[IX(x, y)] += dt;
     }
 
     // b_flag: 1 = 
@@ -99,23 +98,23 @@ public:
         float x, y, s0, s1, t0, t1;
         float dt0 = dt;
 
+        // Linear interpolating the densities at their starting location from the 4 neighbors
         for (int i = 1; i < w-1; i++) {
             for (int j = 1 ; j < h-1; j++){
-                // Linear interpolating the densities at their starting location from the 4 neighbors
+                // Calculate the source location
                 x = i - dt0 * u[IX(i,j)];
                 y = j - dt0 * v[IX(i,j)];
-
+                
                 if (x < 0.5)       { x=0.5; }
                 if (x > (w-1+0.5)) { x=w-1+0.5; }
                 i0 = (int)x, i1 = i0+1;
-
                 if (y < 0.5)       { y=0.5; }
                 if (y > (h-1+0.5)) { y=h-1+0.5; }
                 j0 = (int)y, j1 = j0+1;
 
                 s1 = x-i0, s0 = 1-s1;
                 t1 = y-j0, t0 = 1-t1;
-
+                // Sample from the 4 neighbors around the source point
                 d[IX(i,j)] = s0 * (t0 * d0[IX(i0,j0)] + t1 * d0[IX(i0,j1)]) +
                              s1 * (t0 * d0[IX(i1,j0)] + t1 * d0[IX(i1,j1)]);
             }
@@ -123,7 +122,40 @@ public:
         set_boundry(w, h, b_flag, d);
     }
 
-    // void project();
+    void project(int w, int h, float *u, float *v, float *p, float *div) {
+        float grid_spacing = 1.0/simH;
+
+        for (int i = 1; i < w-1; i++) {
+            for (int j = 1; j < h-1; j++) {
+                div[IX(i,j)] = -0.5 * grid_spacing * (u[IX(i+1,j)] - u[IX(i-1, j)] +
+                                           v[IX(i,j+1)] - v[IX(i,j-1)]);
+                p[IX(i,j)] = 0;
+            }
+        }
+        set_boundry(w, h, 0, div);
+        set_boundry(w, h, 0, p);
+
+        int gauss_seidel_iterations = 20;
+        for (int k = 0; k < gauss_seidel_iterations; k++) {
+            for (int i = 1; i < w-1; i++) {
+                for (int j = 1; j < h-1; j++) {
+                    p[IX(i,j)] = (div[IX(i,j)] + p[IX(i-1,j)] + p[IX(i+1,j)] +
+                                                 p[IX(i,j-1)] + p[IX(i,j+1)]) / 4;
+                }
+            }
+            set_boundry(w, h, 0, p);
+        }
+
+        for (int i = 1; i < w-1; i++) {
+            for (int j = 1; j < h-1; j++) {
+                u[IX(i,j)] -= 0.5 * (p[IX(i+1,j)] - p[IX(i-1,j)]) / grid_spacing;
+                v[IX(i,j)] -= 0.5 * (p[IX(i,j+1)] - p[IX(i,j-1)]) / grid_spacing;
+            }
+        }
+        set_boundry(w, h, 1, u);
+        set_boundry(w, h, 1, v);
+
+    }
 
     void dens_step() {
         SWAP(dens, dens_prev);
@@ -132,9 +164,18 @@ public:
         advect(w, h, 0, dens, dens_prev, u, v, dt);
     }
 
-    // void vel_step();
+    void vel_step() {
+        SWAP(u, u_prev); diffuse(w, h, 1, u, u_prev, viscosity, dt);
+        SWAP(v, v_prev); diffuse(w, h, 2, v, v_prev, viscosity, dt);
+        project(w, h, u, v, u_prev, v_prev);
+        SWAP(u, u_prev); SWAP(v, v_prev);
+        advect(w, h, 1, u, u_prev, u_prev, v_prev, dt);
+        advect(w, h, 2, v, v_prev, u_prev, v_prev, dt);
+        project(w, h, u, v, u_prev, v_prev);
+    }
 
     void update() {
+        vel_step();
         dens_step();
     }
 
