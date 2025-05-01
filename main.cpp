@@ -13,10 +13,10 @@
 
 // int argc, char* argv[]
 int main() {
-    initCircle(2);
+    initCircle(5);
     
     int simW = 240, simH = 135;
-    float diffusion = 0.01, viscosity = 0.0, dt = 3.0;
+    float diffusion = 0.5, viscosity = 0.05, dt = 1.0;
     FluidSim *fluidsim = new FluidSim(simW, simH, diffusion, viscosity, dt);
     
     // for (int i = 0; i < fluidsim->size; ++i) {
@@ -51,9 +51,19 @@ int main() {
     unsigned int texture;
     setupTexture(&texture, fluidsim->w, fluidsim->h);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // float sum = 0;
     // int count = 0;
     // render loop
     while (!glfwWindowShouldClose(window)) {
+        float tmp = 0;
+        for (int i = 0; i < fluidsim->size; i++) {
+            tmp += fluidsim->dens[i];
+        }
+        printf("%f\n", tmp);
+
         processInput(window);
 
         // render
@@ -74,7 +84,7 @@ int main() {
             }
             else if (buttonClicked == G_KEY) {
                 for (int i = 0; i < fluidsim->size; i++) {
-                    fluidsim->v[i] = 1.0f;
+                    fluidsim->v[i] = 0.5f;
                 }
             }
             else if (buttonClicked == S_KEY) {
@@ -86,8 +96,8 @@ int main() {
                 center.xI = int(center.xF);
                 center.yI = int(center.yF);
 
-                for (int i = 0; i < 50; i++) {
-                    for (int j = 0; j < 50; j++) {
+                for (int i = 0; i < 50; i+=2) {
+                    for (int j = -50; j < 50; j+=4) {
                         int newX = center.xI + i;
                         int newY = center.yI + j;
                         
@@ -96,7 +106,7 @@ int main() {
 
                         if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
                             fluidsim->addSource(fluidsim->u, newX, newY, fluidsim->dt*2);
-                            fluidsim->addSource(fluidsim->v, newX, newY, fluidsim->dt*2);
+                            // fluidsim->addSource(fluidsim->v, newX, newY, fluidsim->dt*2);
                         }
                     }
                 }

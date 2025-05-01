@@ -93,20 +93,22 @@ void addForce(FluidSim *fluidsim, float widthScale, float heightScale, int mode)
 
     // circle object holds the vectors that point from the center of a circle to its entire area
     for (int i = 0; i < circle.size; i++) {
-        int newX = center.xI + circle.v[i].xI;
-        int newY = center.yI + circle.v[i].yI;
+        float dx = circle.v[i].xI;
+        float dy = circle.v[i].yI;
+        int newX = center.xI + dx;
+        int newY = center.yI + dy;
         
         // Add to area inside the grid boundry only.
         int w = fluidsim->w-1, h = fluidsim->h-1;
-        int x_sign = 0, y_sign = 0;
-        x_sign = std::max(-1, std::min(1, circle.v[i].xI));
-        y_sign = std::max(-1, std::min(1, circle.v[i].yI));
         if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
-            fluidsim->addSource(fluidsim->u, newX, newY, fluidsim->dt*x_sign*2);
-            fluidsim->addSource(fluidsim->v, newX, newY, fluidsim->dt*y_sign*2);
+            // float distance_squared = dx*dx + dy*dy;
+            fluidsim->addSource(fluidsim->u, newX, newY, dx);
+            fluidsim->addSource(fluidsim->v, newX, newY, dy);
         }
+        // printf("%f %f\n", fluidsim->dt*x_sign*5, fluidsim->dt*y_sign*5);
         
     }
+    // printf("---------------------------------------------------\n");
 }
 
 /*

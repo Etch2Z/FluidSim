@@ -36,6 +36,9 @@ public:
         // for (int i = 0; i < w; i++) {
         //     v[IX(i,h-1)] *= -1;
         // }
+        for (int i = 0; i < w; i++) {
+            v[IX(i, 0)] = 0.0f;  // Zero vertical velocity at bottom wall
+        }
     }
 
     ~FluidSim() {
@@ -54,10 +57,14 @@ public:
     }
 
     void addSource(float *grid, int x, int y, float dt) {
+        grid[IX(x, y)] = dt;
+    }
+
+    void addSource2(float *grid, int x, int y, float dt) {
         grid[IX(x, y)] += dt;
     }
 
-    // b_flag: 1 = 
+    // 
     void set_boundry(int w, int h, int b_flag, float *x) {
         // Left and right
         for (int i = 1; i < h; i++) {
@@ -178,7 +185,6 @@ public:
         vel_step();
         dens_step();
     }
-
-    };
+};
 
 #endif // FluidSim
