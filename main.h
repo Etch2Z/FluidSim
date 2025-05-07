@@ -35,6 +35,10 @@ enum Button {
     LEFT_MOUSE_BUTTON,
     RIGHT_MOUSE_BUTTON,
     G_KEY,
+    H_KEY,
+    J_KEY,
+    K_KEY,
+    R_KEY,
     S_KEY,
 };
 bool BUTTONDOWN = false;
@@ -48,13 +52,29 @@ public:
 
     Circle() { v = nullptr; size = 0; }
     ~Circle() { delete[] v; }
-    void init(int capacity) {
-        capacity = capacity;
+    /* Generate the point as vectors to encompass a circle around its center
+    0 0 0 0 0                           0 0 1 0 0
+    0 0 0 0 0                           0 1 1 1 0
+    0 0 x 0 0   X marks the center ->   1 1 x 1 1
+    0 0 0 0 0                           0 1 1 1 0
+    0 0 0 0 0                           0 0 1 0 0
+    */
+    void init(int radius) {
+        int squareSize = (2*radius+1) * (2*radius+1);
+        capacity = squareSize;
         v = new Point[capacity];
+
+        for (int i = -radius; i <= radius; i++) {
+            for (int j = -radius; j <= radius; j++) {
+                if (sqrt(i*i + j*j) <= radius+0.5) {
+                    this->append(Point{.xI=i, .yI=j});
+                }
+            }
+        }
     }
     void append(Point point) { v[size++] = point; }
 };
-Circle circle;
+Circle circle1, circle2;
 
 /*
 //////////////////////////////// Function Declarations /////////////////////////////////////////////////
@@ -77,38 +97,36 @@ void processInput(GLFWwindow *window);
 /*
 //////////////////////////////// Function Definitions /////////////////////////////////////////////////
 */
+const int PUSH = 1; // Remove push/pull, just set x and y dir, -1 and -1
+const int PULL = -1;
 
-const int PUSH = 0;
-const int PULL = 1;
-void addForce(FluidSim *fluidsim, float widthScale, float heightScale, int mode) {
-    // int sign = 1;
-    // if (mode == PUSH) {
-        
-    // }
-
+void addForce(FluidSim *fluidsim, float widthScale, float heightScale, Circle &circle, int mode, float x_dir, float y_dir) {
+    // Size of circle also contributes to the circle of incluence
+    float multiplier = 4.0*mode;
+    
     // Get mouse location
     Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
     center.xI = int(center.xF);
     center.yI = int(center.yF);
-
+    
     // circle object holds the vectors that point from the center of a circle to its entire area
     for (int i = 0; i < circle.size; i++) {
-        float dx = circle.v[i].xI;
+        float dx = circle.v[i].xI;  // Maybe normalize this
         float dy = circle.v[i].yI;
         int newX = center.xI + dx;
         int newY = center.yI + dy;
-        
+
+        dx *= multiplier*x_dir;
+        dy *= multiplier*y_dir;
+
         // Add to area inside the grid boundry only.
         int w = fluidsim->w-1, h = fluidsim->h-1;
         if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
             // float distance_squared = dx*dx + dy*dy;
             fluidsim->addSource(fluidsim->u, newX, newY, dx);
             fluidsim->addSource(fluidsim->v, newX, newY, dy);
-        }
-        // printf("%f %f\n", fluidsim->dt*x_sign*5, fluidsim->dt*y_sign*5);
-        
+        }       
     }
-    // printf("---------------------------------------------------\n");
 }
 
 /*
@@ -118,43 +136,26 @@ density map: simW, simH
 Ex. screenW = 500   simW = 250      widthScale = 1/2
 mouseLoc: 400   => 400* 1/2 => simLoc = 200
 */
-void addCircle(FluidSim *fluidsim, float widthScale, float heightScale) {
+void addCircle(FluidSim *fluidsim, float widthScale, float heightScale, Circle &circle) {
     Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
     center.xI = int(center.xF);
     center.yI = int(center.yF);
 
+
     for (int i = 0; i < circle.size; i++) {
         int newX = center.xI + circle.v[i].xI;
         int newY = center.yI + circle.v[i].yI;
+        // printf("%d %d ", circle.v[i].xI, circle.v[i].yI);
         
         // Add to area inside the grid boundry only.
         int w = fluidsim->w-1, h = fluidsim->h-1;
         if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
-            fluidsim->addSource(fluidsim->dens, newX, newY, fluidsim->dt);
+            fluidsim->addSource(fluidsim->dens, newX, newY, 0.5);
         }
         
     }
 }
 
-/* Generate the point as vectors to encompass a circle around its center
-0 0 0 0 0                           0 0 1 0 0
-0 0 0 0 0                           0 1 1 1 0
-0 0 x 0 0   X marks the center ->   1 1 x 1 1
-0 0 0 0 0                           0 1 1 1 0
-0 0 0 0 0                           0 0 1 0 0
-*/
-void initCircle(int radius) {
-    int squareSize = (2*radius+1) * (2*radius+1);
-    circle.init(squareSize);
-
-    for (int i = -radius; i <= radius; i++) {
-        for (int j = -radius; j <= radius; j++) {
-            if (sqrt(i*i + j*j) <= radius+0.5) {
-                circle.append(Point{.xI=i, .yI=j});
-            }
-        }
-    }
-}
 
 // Setup window, window setting, input callback functions
 GLFWwindow* init_window() {
@@ -260,12 +261,21 @@ void trackMouse(GLFWwindow *window) {
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         BUTTONDOWN = true;
-        if (key == GLFW_KEY_G) {
-            buttonClicked = G_KEY;
+        switch (key) {
+            case GLFW_KEY_G:
+                buttonClicked = G_KEY; break;
+            case GLFW_KEY_H:
+                buttonClicked = H_KEY; break;
+            case GLFW_KEY_J:
+                buttonClicked = J_KEY; break;
+            case GLFW_KEY_K:
+                buttonClicked = K_KEY; break;
+            case GLFW_KEY_S:
+                buttonClicked = S_KEY; break;
+            case GLFW_KEY_R:
+                buttonClicked = R_KEY; break;
         }
-        else if (key == GLFW_KEY_S) {
-            buttonClicked = S_KEY;
-        }
+
     }
     else if (action == GLFW_RELEASE) {
         BUTTONDOWN = false;

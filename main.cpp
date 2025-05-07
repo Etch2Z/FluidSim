@@ -13,28 +13,12 @@
 
 // int argc, char* argv[]
 int main() {
-    initCircle(5);
+    circle1.init(4);
+    circle2.init(5);
     
     int simW = 240, simH = 135;
     float diffusion = 0.5, viscosity = 0.05, dt = 1.0;
     FluidSim *fluidsim = new FluidSim(simW, simH, diffusion, viscosity, dt);
-    
-    // for (int i = 0; i < fluidsim->size; ++i) {
-    //     // fluidsim->dens_prev[i] = 1.0f;  // Simple gradient from 0 to 1
-    //     printf("%f ", fluidsim->dens[i]);
-    // }
-
-    // printf("\n---------------------------------\n");
-    // // fluidsim->update();
-    // for (int i = 0; i < fluidsim->w; i++) {
-    //     for (int j = 0; j < fluidsim->h; j++) {
-    //         // printf("%f ", fluidsim->dens[fluidsim->IX(j,i)]);
-    //         printf("%d ", fluidsim->IX(i, j));
-    //     }
-    //     printf("\n");
-    // }
-
-    // return 0;
 
     // Init window
     GLFWwindow* window = init_window();
@@ -54,16 +38,8 @@ int main() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // float sum = 0;
-    // int count = 0;
     // render loop
     while (!glfwWindowShouldClose(window)) {
-        float tmp = 0;
-        for (int i = 0; i < fluidsim->size; i++) {
-            tmp += fluidsim->dens[i];
-        }
-        printf("%f\n", tmp);
-
         processInput(window);
 
         // render
@@ -74,59 +50,46 @@ int main() {
 
         if (BUTTONDOWN) {
             if (buttonClicked == LEFT_MOUSE_BUTTON) {
-                // printf("L\n");
-                addCircle(fluidsim, widthScale, heightScale);
+                addCircle(fluidsim, widthScale, heightScale, circle1);
             }
             else if (buttonClicked == RIGHT_MOUSE_BUTTON) {
-                // printf("R\n");
                 // When clicked, add a circle of velocity fields that attract/pushes away
-                addForce(fluidsim, widthScale, heightScale, PUSH);
-            }
-            else if (buttonClicked == G_KEY) {
-                for (int i = 0; i < fluidsim->size; i++) {
-                    fluidsim->v[i] = 0.5f;
-                }
+                addForce(fluidsim, widthScale, heightScale, circle2, PUSH, 1, 1);
             }
             else if (buttonClicked == S_KEY) {
-                // printf("S\n");
-                // for (int i = 0; i < fluidsim->size; i++) {
-                //     fluidsim->dens[i] = 0;
-                // }
-                Point center = {mouseLoc.xF * widthScale, mouseLoc.yF * heightScale};
-                center.xI = int(center.xF);
-                center.yI = int(center.yF);
-
-                for (int i = 0; i < 50; i+=2) {
-                    for (int j = -50; j < 50; j+=4) {
-                        int newX = center.xI + i;
-                        int newY = center.yI + j;
-                        
-                        // Add to area inside the grid boundry only.
-                        int w = fluidsim->w-1, h = fluidsim->h-1;
-
-                        if (newX >= 1 && newX < w && newY >= 1 && newY < h) {
-                            fluidsim->addSource(fluidsim->u, newX, newY, fluidsim->dt*2);
-                            // fluidsim->addSource(fluidsim->v, newX, newY, fluidsim->dt*2);
-                        }
-                    }
+                addForce(fluidsim, widthScale, heightScale, circle2, PULL, 1, 1);
+            }
+            else if (buttonClicked == G_KEY) {
+                // lobsided
+                addForce(fluidsim, widthScale, heightScale, circle2, PUSH, 0, 1);
+            }
+            else if (buttonClicked == H_KEY) {
+                addForce(fluidsim, widthScale, heightScale, circle2, PUSH, -1, 1);
+            }
+            else if (buttonClicked == J_KEY) {
+                addForce(fluidsim, widthScale, heightScale, circle2, PUSH, 1, 0);
+            }
+            else if (buttonClicked == K_KEY) {
+                addForce(fluidsim, widthScale, heightScale, circle2, PUSH, 1, -1);
+            }
+            
+            else if (buttonClicked == R_KEY) {
+                // reset
+                for (int i = 0; i < fluidsim->size; i++) {
+                    fluidsim->dens[i] = 0.0f;
+                    fluidsim->u[i] = 0.0f;
+                    fluidsim->v[i] = 0.0f;
                 }
+            }
+            else if(false){
+                // gravity?
+                // for (int i = 0; i < fluidsim->size; i++) {
+                //     fluidsim->v[i] += 0.8f;
+                // }
             }
         }
 
         fluidsim->update();
-        // if (count == 50) {
-        //     printf("-----------------------\n");
-        //     for (int i = 0; i < fluidsim->h; i++) {
-        //         for (int j = 0; j < fluidsim->w; j++) {
-        //             printf("%f ", fluidsim->dens[fluidsim->IX(j,i)]);
-        //             // printf("%d ", fluidsim->IX(i, j));
-        //         }
-        //         printf("\n");
-        //     }
-        //     count = 0;
-        // }
-        // count++;
-
         // Bind texture & load with density
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, fluidsim->w, fluidsim->h, GL_RED, GL_FLOAT, fluidsim->dens);

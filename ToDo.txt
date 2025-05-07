@@ -22,15 +22,53 @@ Eg. Clicking a mouse -> retrieve cord -> map coord to density[]
 12. Velocity Fields. Right click to add velocity field. Done
 13. A trigger for gravity (Full grid of negative vertical velocity) Done
 14. More buttons. Ex. button to turn on gravity, left & right click. Colors? Done
-16. Clean up so far.
-17. Make bounding box with gravity.
-18. GPU.
 
+At this point the simulation is essentially built. From here it's a matter of which direction
+I want to take the project in. For the most time wasted direction I tried going in soon after 
+getting the simulation to work: I tried various alterations to the simulation in an attempt to fill
+the screen up with gravity obeying water like a tank in real life. I tried setting differnt boundary conditions for velocity.
+I tried changing different paramter settings, a different advection method that has less of a mass loss.
+I even tried increasing the number of iterations done in projection of velocity field with a guess that the velocity field was the problem.
+But all trials failed to address the problem that fluids running into the edge of the simulation would essentially charge off the screen.
+Intuitively, losing fluids near the edge of the screen says it's a density problem. However a simple step through over the 
+update steps says that diffusion works fine, since density near the border simply trades mass back and forth between the inside cells,
+and the border cells. Specifically, that a border cell will just copy the nearest cell's density value, for which in the next step
+the inside cell will pick that value back up by diffusion. Essentially storing the mass in the border.
+With that skeptism cleared, the only possibility lies in the velocity solver section.
+Starting with the conclusion, the answer to where the densities have gone hides in the linear interpolation for the 
+advect() step. In order to get the density value of some cell C, due to the effect of velocity, advection samples
+using linear interpolation from the location that fluid mass would have traveled from cell C_(n-1) to the current
+cell C_(n). Note that this makes an essential assumption that because we're using small time steps, the velocity
+of some mass body would not have changed substantially since last movement. So we just use the inverse of velocity from the current cell,
+in its exact values, pretending it's carried over from whereever it came from. Due to the linear interpolation, some mass is loss.
+And due to this method of calculation, density advection makes it so that the body of fluid near the border does not know
+to "bounce back". Mathematically, let say there's is some square grid of fluid aligned exactly at the ground border. Let there
+also be a constant velocity field going downwards to represent gravity. Then, as an effect of my implementation for advection,
+cell density values would be caculation based on only the cells above the square grid of fluid. Since the simulation,
+only looks to set the density value at current cell, by sampling density values based current cell's velocity. It could only believe that
+the cell near the border had come from the direction above, due to the downwards gravity that the current cell is experiencing.
+This belief means that for a cell that is close to the border, it will have no where to go downwards, while in the upstream sampling, advect() continuiously
+moves the head part of the fluid into the current cell. All of which creates a visual of the fluid getting compressed and stuck to decay until dissapating.
+I'd like to think this is a flaw fundamenntal to the grid based method, that without a complete redesign, will be incomparable to the SPH methods.
+Easy fixes come in the form of rigourous boundary designs, but I'm afraid that may induce too much computational cost.
 
-X. Test: Display some data supplied by a function(FluidSim)
-X. Package everything needed to build necessary libraries that let any user on "any" platform do make/compile an executable.
+Not that this is only a problem, when I try to make a hard border like the ones showcased in SPH implementations and in the real world.
+The fluid acts fine and normal to real life, when pretending it's a gas.
+
+Ex. it doesn't bounce back from a wall
+
+Fixes: Might just be some part of the code i'm screwing up,
+       thicker boundary so that the border cells could use a more complex calculation to say, know that there's a wall and not diffuse/advect that way,
+       in advect, cells could instead sample from some circle radius around it self. the radius would be based on the current cell's velocity and check
+          if that candidate cell could have contributed to the current cell's density value. This would need to combine with the thicker boundary,
+          so that density values could be stored inside that boundary to indicate the mirrored location for the density to bounce back to.
+
+X. Clean up so far.
+X. GPU.
+X. Presets
 X. Framebuffers: Write the density info directly to a texture.
-X. Adjust simulation with a change in window size?
+
+X. Package everything needed to build necessary libraries that let any user on "any" platform do make/compile an executable.
 
 Note: Make simulation size = texture size.
 If larger, some part of the density map will get cliped.

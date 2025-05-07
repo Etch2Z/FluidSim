@@ -29,16 +29,6 @@ public:
         dens      = new float[size] {};
         dens_prev = new float[size] {};
         
-        // for (int i = 0; i < size/2; i++) {
-        //     v[i] = -1.0f;
-        // }
-
-        // for (int i = 0; i < w; i++) {
-        //     v[IX(i,h-1)] *= -1;
-        // }
-        for (int i = 0; i < w; i++) {
-            v[IX(i, 0)] = 0.0f;  // Zero vertical velocity at bottom wall
-        }
     }
 
     ~FluidSim() {
@@ -57,14 +47,13 @@ public:
     }
 
     void addSource(float *grid, int x, int y, float dt) {
-        grid[IX(x, y)] = dt;
+        grid[IX(x,y)] += dt;
     }
 
-    void addSource2(float *grid, int x, int y, float dt) {
-        grid[IX(x, y)] += dt;
-    }
+    // void addSource2(float *grid, int x, int y, float dt) {
+    //     grid[IX(x, y)] = dt;
+    // }
 
-    // 
     void set_boundry(int w, int h, int b_flag, float *x) {
         // Left and right
         for (int i = 1; i < h; i++) {
@@ -135,7 +124,7 @@ public:
         for (int i = 1; i < w-1; i++) {
             for (int j = 1; j < h-1; j++) {
                 div[IX(i,j)] = -0.5 * grid_spacing * (u[IX(i+1,j)] - u[IX(i-1, j)] +
-                                           v[IX(i,j+1)] - v[IX(i,j-1)]);
+                                                      v[IX(i,j+1)] - v[IX(i,j-1)]);
                 p[IX(i,j)] = 0;
             }
         }
